@@ -1,0 +1,43 @@
+services:
+  api:
+    build: .
+    ports:
+      - '8000:8000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/car/lib/postgresql/data
+    healthcheck:
+      interval: 5s
+      test:
+        - CMD-SHELL
+        - PGUSER=postgres
+        - pg_isready
+  
+  migrate:
+    build: .
+    command: python ./manage.py migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "8001:80"
+volumes:
+  db:
